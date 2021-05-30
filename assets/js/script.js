@@ -1,13 +1,15 @@
 // Event handlers
 
 // variables
-var timePeriod = ["past", "present", "future"];
+var bckgndClass = "";
 var eventText = "";
 var events = [];
 var tempEvents = [];
-var hours = [9 + " AM", 10 + " AM", 11 + " AM", 12 + " PM", 1 + " PM", 2 + " PM", 3 + " PM", 4 + " PM", 5 + " PM"];
+var hours = ["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM"];
 
 var createRow = function() {
+    addDateHeader();
+
     var rowContainerEl = $(".container");
 
     for (var i = 0; i < 9; i++) {
@@ -21,8 +23,10 @@ var createRow = function() {
         rowEl.append(timeColEl);
         rowContainerEl.append(rowEl);
 
-        var taskColEl = $("<div>").addClass("col-10 past");
+        var taskColEl = $("<div>").addClass("col-10 ");
         var taskTextEl = $("<textarea>").addClass("description").attr("placeholder", "Enter event details...").attr("id", [i]);
+
+        auditEvents([i], taskColEl);
 
         taskColEl.append(taskTextEl);
         rowEl.append(taskColEl);
@@ -33,24 +37,22 @@ var createRow = function() {
         saveBtnEl.append(saveBtnIcnEl);
         rowEl.append(saveBtnEl);
     }
+    loadEvents();
 };
 
 var saveEvents = function(events) {
     var tempEvents = JSON.parse(localStorage.getItem("events"));
-    // var newArr = [];
+
     window.localStorage.clear();
-    // console.log("cleared localStorage");
 
     console.log("events before: ", tempEvents);
     if (tempEvents) {
         for (var i = 0; i < 9; i++) {
             tempEvents.splice(i, 1, events[i]);
-            console.log("if", tempEvents, events);
             localStorage.setItem("events", JSON.stringify(tempEvents));
         }
     } else {
         localStorage.setItem("events", JSON.stringify(events));
-        console.log("else", events);
     }
 };
 
@@ -59,9 +61,43 @@ var loadEvents = function() {
     if (!events) {
         events = [];
     } else {
-        return events;
+        for (var i = 0; events.length; i++) {
+            var taskTextEl = document.getElementById(events[i].eventFieldId);
+            taskTextEl.textContent = events[i].eventText;
+        };
     }
 };
+
+var auditEvents = function(i, taskColEl) {
+    // create date strings, then convert back to moment object for comparison
+    var tempTime = moment();
+    var time = tempTime.format("h A");
+    time = moment(time, "h A");
+    var timeBlock = moment(hours[i], "h A");
+    var resetTime = moment(hours[0], "h A");
+
+    // Check whether timeBlock is past, present, or future
+    if (time < timeBlock) {
+        bckgndClass = "future";
+    } else if (time > timeBlock) {
+        bckgndClass = "past";
+    } else {
+        bckgndClass = "present";
+    }
+
+    if (time === resetTime) {
+        window.localStorage.clear();
+    }
+
+    taskColEl.addClass(bckgndClass);
+};
+
+var addDateHeader = function() {
+    var curDate = moment().format("dddd, MMMM Do YYYY");
+
+    $("#currentDay").text(curDate);
+};
+
 
 // on click, grab text and save to events
 $(".container").on("change", "textarea", function() {
